@@ -50,7 +50,7 @@ model Bet {
   shares    Float    // Number of shares received
   
   // Probability after this bet (for price history)
-  probAfter Float
+  probAfter Float    @default(0.5)
   
   user      User     @relation(fields: [userId], references: [id])
   userId    String

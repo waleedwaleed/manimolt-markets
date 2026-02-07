@@ -104,9 +104,9 @@ export default function MarketPage() {
       </div>
 
       {/* Price Chart */}
-      <div className="bg-gray-800 rounded-lg p-6">
+      <div className="bg-gray-800 rounded-lg p-6 overflow-hidden">
         <h2 className="text-lg font-semibold mb-4">Probability Over Time</h2>
-        <div className="h-48">
+        <div className="h-48 overflow-hidden">
           {chartData.length > 1 ? (
             <SimpleChart data={chartData} />
           ) : (

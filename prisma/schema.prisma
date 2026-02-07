@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  balance   Float    @default(1000) // Starting play money
+  bets      Bet[]
+  markets   Market[] @relation("MarketCreator")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Market {
+  id          String   @id @default(cuid())
+  question    String
+  description String?
+  
+  // AMM state - using simple constant product
+  yesShares   Float    @default(100)
+  noShares    Float    @default(100)
+  
+  resolved    Boolean  @default(false)
+  resolution  String?  // "YES", "NO", or null
+  
+  creator     User     @relation("MarketCreator", fields: [creatorId], references: [id])
+  creatorId   String
+  
+  bets        Bet[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  closesAt    DateTime?
+}
+
+model Bet {
+  id        String   @id @default(cuid())
+  amount    Float
+  outcome   String   // "YES" or "NO"
+  shares    Float    // Number of shares received
+  
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  
+  market    Market   @relation(fields: [marketId], references: [id])
+  marketId  String
+  
+  createdAt DateTime @default(now())
+}

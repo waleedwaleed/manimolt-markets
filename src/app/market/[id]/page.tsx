@@ -104,9 +104,9 @@ export default function MarketPage() {
       </div>
 
       {/* Price Chart */}
-      <div className="bg-gray-800 rounded-lg p-6 overflow-hidden">
+      <div className="bg-gray-800 rounded-lg p-6">
         <h2 className="text-lg font-semibold mb-4">Probability Over Time</h2>
-        <div className="h-48 overflow-hidden">
+        <div style={{ height: '200px' }}>
           {chartData.length > 1 ? (
             <SimpleChart data={chartData} />
           ) : (
@@ -234,61 +234,48 @@ export default function MarketPage() {
 
 // Simple SVG-based chart component
 function SimpleChart({ data }: { data: { prob: number; time: string }[] }) {
-  const width = 100
-  const height = 100
-  const padding = 5
+  const currentProb = data[data.length - 1]?.prob ?? 50
 
-  // Generate SVG path
+  // Generate path points (0-100 coordinate space)
   const points = data.map((d, i) => {
-    const x = padding + (i / (data.length - 1)) * (width - 2 * padding)
-    const y = height - padding - (d.prob / 100) * (height - 2 * padding)
-    return `${x},${y}`
+    const x = (i / Math.max(data.length - 1, 1)) * 100
+    const y = 100 - d.prob // flip Y axis (0 at bottom, 100 at top)
+    return { x, y }
   })
 
-  const pathD = `M ${points.join(' L ')}`
-
-  // Area fill path
-  const areaD = `${pathD} L ${width - padding},${height - padding} L ${padding},${height - padding} Z`
-
-  const currentProb = data[data.length - 1]?.prob ?? 50
+  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
+  const areaD = `${pathD} L 100 100 L 0 100 Z`
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-1 relative">
+      {/* Chart area with fixed aspect ratio */}
+      <div className="relative flex-1 min-h-0" style={{ maxHeight: '160px' }}>
         <svg
-          viewBox={`0 0 ${width} ${height}`}
-          className="w-full h-full"
+          viewBox="0 0 100 100"
           preserveAspectRatio="none"
+          className="absolute inset-0 w-full h-full"
+          style={{ display: 'block' }}
         >
-          {/* Grid lines */}
-          <line x1={padding} y1={height/2} x2={width-padding} y2={height/2} stroke="#374151" strokeDasharray="2,2" />
+          {/* Grid line at 50% */}
+          <line x1="0" y1="50" x2="100" y2="50" stroke="#374151" strokeWidth="0.5" strokeDasharray="2,2" />
           
           {/* Area fill */}
-          <path d={areaD} fill="url(#gradient)" opacity="0.3" />
+          <path d={areaD} fill="#3b82f6" opacity="0.2" />
           
           {/* Line */}
           <path d={pathD} fill="none" stroke="#3b82f6" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-          
-          {/* Gradient definition */}
-          <defs>
-            <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#3b82f6" />
-              <stop offset="100%" stopColor="#1f2937" />
-            </linearGradient>
-          </defs>
         </svg>
 
         {/* Current value indicator */}
-        <div className="absolute top-2 right-2 bg-gray-700 px-2 py-1 rounded text-sm">
+        <div className="absolute top-2 right-2 bg-gray-700/90 px-2 py-1 rounded text-sm z-10">
           <span className="text-blue-400 font-bold">{currentProb}%</span>
           <span className="text-gray-400 ml-1">YES</span>
         </div>
       </div>
 
-      {/* Y-axis labels */}
-      <div className="flex justify-between text-xs text-gray-500 mt-1">
+      {/* X-axis labels */}
+      <div className="flex justify-between text-xs text-gray-500 mt-2 flex-shrink-0">
         <span>{data[0]?.time}</span>
-        <span>50%</span>
         <span>{data[data.length - 1]?.time}</span>
       </div>
     </div>

@@ -26,6 +26,9 @@ model Market {
   yesShares   Float    @default(100)
   noShares    Float    @default(100)
   
+  // Tracking
+  volume      Float    @default(0)  // Total amount bet
+  
   resolved    Boolean  @default(false)
   resolution  String?  // "YES", "NO", or null
   
@@ -33,6 +36,7 @@ model Market {
   creatorId   String
   
   bets        Bet[]
+  priceHistory PricePoint[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -45,6 +49,9 @@ model Bet {
   outcome   String   // "YES" or "NO"
   shares    Float    // Number of shares received
   
+  // Probability after this bet (for price history)
+  probAfter Float
+  
   user      User     @relation(fields: [userId], references: [id])
   userId    String
   
@@ -52,4 +59,16 @@ model Bet {
   marketId  String
   
   createdAt DateTime @default(now())
+}
+
+model PricePoint {
+  id        String   @id @default(cuid())
+  prob      Float    // Probability at this point (0-1)
+  
+  market    Market   @relation(fields: [marketId], references: [id])
+  marketId  String
+  
+  createdAt DateTime @default(now())
+  
+  @@index([marketId, createdAt])
 }

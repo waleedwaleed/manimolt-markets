@@ -1,6 +1,7 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import { TRPCProvider } from '@/lib/trpc-provider'
+import { AuthProvider } from '@/components/AuthProvider'
 import { Header } from '@/components/Header'
 
 export const metadata: Metadata = {
@@ -16,12 +17,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-gray-900 text-white min-h-screen">
-        <TRPCProvider>
-          <Header />
-          <main className="max-w-4xl mx-auto p-4">
-            {children}
-          </main>
-        </TRPCProvider>
+        <AuthProvider>
+          <TRPCProvider>
+            <Header />
+            <main className="max-w-4xl mx-auto p-4">
+              {children}
+            </main>
+          </TRPCProvider>
+        </AuthProvider>
       </body>
     </html>
   )

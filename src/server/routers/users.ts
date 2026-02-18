@@ -1,15 +1,15 @@
-import { router, publicProcedure } from '../trpc'
+import { z } from 'zod'
+import { router, publicProcedure, protectedProcedure } from '../trpc'
+import { TRPCError } from '@trpc/server'
+import bcrypt from 'bcrypt'
 
 export const usersRouter = router({
-  me: publicProcedure.query(async ({ ctx }) => {
-    // For demo, get or create a demo user
-    let user = await ctx.prisma.user.findFirst()
-    if (!user) {
-      user = await ctx.prisma.user.create({
-        data: { name: 'Demo User', balance: 1000 }
-      })
-    }
-    return user
+  me: protectedProcedure.query(async ({ ctx }) => {
+    const user = await ctx.prisma.user.findUnique({
+      where: { id: ctx.userId },
+    })
+    if (!user) throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' })
+    return { id: user.id, name: user.name, email: user.email, balance: user.balance }
   }),
 
   leaderboard: publicProcedure.query(async ({ ctx }) => {
@@ -24,4 +24,28 @@ export const usersRouter = router({
       }
     })
   }),
+
+  register: publicProcedure
+    .input(z.object({
+      name: z.string().min(1).max(100),
+      email: z.string().email(),
+      password: z.string().min(6).max(200),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.prisma.user.findUnique({ where: { email: input.email } })
+      if (existing) {
+        throw new TRPCError({ code: 'CONFLICT', message: 'Email already in use' })
+      }
+
+      const passwordHash = await bcrypt.hash(input.password, 10)
+      const user = await ctx.prisma.user.create({
+        data: {
+          name: input.name,
+          email: input.email,
+          passwordHash,
+        },
+      })
+
+      return { id: user.id, name: user.name, email: user.email }
+    }),
 })

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { randomBytes } from 'crypto'
 import { router, publicProcedure, protectedProcedure } from '../trpc'
 import { TRPCError } from '@trpc/server'
 import bcrypt from 'bcrypt'
@@ -47,5 +48,15 @@ export const usersRouter = router({
       })
 
       return { id: user.id, name: user.name, email: user.email }
+    }),
+
+  generateApiKey: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const apiKey = `mm_${randomBytes(32).toString('hex')}`
+      await ctx.prisma.user.update({
+        where: { id: ctx.userId },
+        data: { apiKey },
+      })
+      return { apiKey }
     }),
 })

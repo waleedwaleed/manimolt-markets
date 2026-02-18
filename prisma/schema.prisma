@@ -13,6 +13,7 @@ model User {
   email        String   @unique
   passwordHash String
   balance      Float    @default(1000) // Starting play money
+  apiKey       String?  @unique
   bets         Bet[]
   markets      Market[] @relation("MarketCreator")
   createdAt    DateTime @default(now())
